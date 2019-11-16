@@ -7,12 +7,9 @@ import nysol.util.margs as margs
 import nysol.mcmd as nm
 
 #sys.path.append('../nysol/view')
-import viewjs as vjs
+import nysol.view.viewjs as vjs
 
-#  (dataStr, countKey, maxValue, maxLeg, maxValueSize, minValue) = makeZeroDemData(iFile, legendKey, barValue)
-# iFile(inputファイル)
-# legendKey(キーの項目)     (例：年代)
-# barValue(値の項目)     (例：人口)
+
 
 class dataForGraphDsp(object):
 
@@ -24,8 +21,8 @@ class dataForGraphDsp(object):
 		self.keycount = 0
 		self.klables  = {}
 
-		self.maxValue = 0 # 構成量項目の最大値を取得 全体で一つ
-		self.minValue	= 0 # 構成量項目の最小値を取得 全体で一つ
+		self.maxValue = 0 
+		self.minValue	= 0 
 		self.maxLeg   = 0
 		self.maxValueSize = 0
 		self.linedata  = []
@@ -62,16 +59,28 @@ class dataForGraphDsp(object):
 
 		self.linedata.append(val)
 
-	def addAxis(self,x,y=None):
-
-		if not x in self.xlables :
-			self.xlables[x] = 1 
+	def addAxis(self,xy):
+		if len(xy) == 0 :
 			self.xcount +=1
-
-		if y!=None and not y in self.ylables :
-			self.ylables[y] = 1 
 			self.ycount +=1
 			
+		else :
+
+			if not xy[0] in self.xlables :
+				self.xlables[xy[0]] = 1 
+				self.xcount +=1
+
+			if len(xy) > 1:
+				if not xy[1] in self.ylables :
+					self.ylables[xy[1]] = 1 
+					self.ycount +=1
+
+	def adjustXMax(self,xMax):
+		if self.xcount > xMax :
+			self.ycount = self.xcount / xMax
+			self.xcount = xMax
+		else:
+			self.ycount = 1
 
 	def addKeyLabel(self,key):
 
@@ -82,9 +91,11 @@ class dataForGraphDsp(object):
 	def dataStr(self):
 		return ",".join(self.linedata) 
 
+
+
+
 def __makeZeroDemData(iFile, legendKey, barValue):
 
-	#rtn = dataForGraphDsp("var data = [\n{")
 	rtn = dataForGraphDsp()
 
 	kvstr = []
@@ -106,7 +117,6 @@ def __makeZeroDemData(iFile, legendKey, barValue):
 	return rtn
 
 
-#  (dataStr, xcount, keycount, maxValue, maxLeg, maxValueSize, minValue) = makeOneDemData(iFile, primKey, legendKey, barValue)
 # iFile(inputファイル)
 # primKey(主キー)        (例：Pref)
 # legendKey(キーの項目)     (例：年代)
@@ -140,7 +150,6 @@ def __makeOneDemData(iFile , legendKey, barValue, primKey):
 
 
 
-#  (dataStr, xcount, ycount, keycount, maxValue, maxLeg, maxValueSize, minValue) = makeTwoDemData(iFile, yBar, xBar, legendKey, barValue)
 # iFile(inputファイル)
 # yBar(keyの値:行の項目)
 # xBar(keyの値:列の項目)
@@ -175,158 +184,77 @@ def __makeTwoDemData(iFile, legendKey, barValue, xBar, yBar):
 	return  rtn
 
 
+# iFile(inputファイル)
+# yBar(keyの値:行の項目)
+# xBar(keyの値:列の項目)
+# legendKey(キーの項目)
+# barValue(値の項目)
+def __makeData(iFile, legendKey, barValue,keys):
+
+	rtn = dataForGraphDsp()
+
+	kvstr = []
+
+	for flds,top,bot in nm.readcsv(iFile).getline(k=keys , otype='dict',q=True):
+
+		if top == True:
+			keyhead = [] 
+			keyfld  = [] 
+			for key in keys:
+				keyhead.append("\"%s\":\"%s\""%(key,flds[key]))
+				keyfld.append(flds[key]) 
+				
+			if len(keyhead) > 0:
+				kvstr.append(",".join(keyhead))
+
+			rtn.addAxis(keyfld)
 
 
-"""
-args=margs.Margs(sys.argv,"i=,o=,title=,cc=,height=,width=,k=,f=,v=,--help","f=,v=")
+		rtn.calMaxLeg(flds[legendKey])
+		rtn.addKeyLabel(flds[legendKey])
+		rtn.checkValue(flds[barValue])
 
-入力ファイル
-終了ファイル
-タイトル
-サイズ(z,y)
-key(0,1,2)
-横個数 (keyが一つの時のみ)
-構成要素項目名(横軸)
-構成量項目名(縦軸)
-"""
+		kvstr.append( "\"_%s\":\"%s\""%(flds[legendKey],flds[barValue]) )
 
+		if bot == True : 
+
+			rtn.addData("{" + ",".join(kvstr) + "}")
+			kvstr =[]
+
+
+	return  rtn
 
 def mbar(i,o,v,f,k=None,title=None,height=None,width=None,cc=None,footer=""):
-	"""
-概要) CSVデータから棒グラフ(HTML)を作成する
-      1次元グリッド、２次元グリッドのグラフ表示が可能
-      マウススクロールで拡大、縮小、マウスドラッグで画像の移動が可能
 
-書式1) #{$cmd} [i=] [o=] [title=] [height=] [width=] [k=] [cc=] f= v= [--help]
-                i=        : 入力データファイル名(CSV形式)
-                o=        : 出力ファイル名(HTMLファイル)
-                title=    : グラフのタイトル文字列を指定する
-                height=   : 棒グラフ用描画枠の縦幅を指定する(default:250/1つの棒グラフは400)
-                width=    : 棒グラフ用描画枠の横幅を指定する(default:250/1つの棒グラフは600)
-                k=        : x軸,y軸に展開する属性項目名
-                            k=なしの場合は棒グラフを1つ作成する
-                            項目を1つ指定した場合は1次元の棒グラフ行列を、
-                            項目を2つ指定した場合は2次元の棒グラフ行列を作成する
-                            (y軸項目,x軸項目の順に指定)
-                cc=       : 1行に表示する棒グラフの最大数を指定する(default:5)
-                            1次元グラフのみで指定可能(k=1つ指定の場合)
-                f=        : 構成要素項目名を指定する(必須)
-                            データにnullが含まれる場合は無視する
-                v=    : 構成量項目(棒グラフの高さを決定する項目)を指定する(必須)
-                            データにnullが含まれる場合は0として扱う
-                            先頭の0は無視する
-                            数字以外の場合はエラーとなる
-                --help    : ヘルプの表示
-
-注意1)コマンドには、f=パラメータやk=パラメータで指定した項目を自動的に並べ替える機能はない
-グラフに表示したい順に、あらかじめ並べ替えておく必要がある。
-1次元、２次元グラフの場合はデータの先頭の棒グラフの表示順に並べられる
-
-例1) 棒グラフを1つ描画する
-dat1.csvファイルのAgeを構成要素項目に、Populationを構成量項目として棒グラフを1つ描画する
-
-dat1.csv
-Age,Population
-10,310504
-20,552339
-30,259034.5555
-40,0450818
-50,1231572
-60,1215966
-70,641667
-
-$ #{$cmd} i=dat1.csv v=Population f=Age o=result1.html
-
-例2) 1次元の棒グラフ行列を描画する
-dat2.csvファイルのAgeを構成要素項目に、Populationを構成量項目として棒グラフを描画する
-k=パラメータにPref項目を指定しているので、
-Pref項目の値をx軸(横方向)に展開した1次元の棒グラフ行列が描画される
-title=パラメータでグラフのタイトルも指定している
-
-dat2.csv
-Pref,Age,Population
-奈良,10,310504
-奈良,20,552339
-奈良,30,259034
-奈良,40,450818
-奈良,50,1231572
-奈良,60,1215966
-奈良,70,641667
-北海道,10,310504
-北海道,20,252339
-北海道,30,859034
-北海道,40,150818
-北海道,50,9231572
-北海道,60,4215966
-北海道,70,341667
-
-$ #{$cmd} i=dat2.csv k=Pref v=Population f=Age o=result2.html
-
-例3) x軸上に表示する棒グラフの最大数を1とする
-
-$ #{$cmd} i=dat2.csv k=Pref v=Population f=Age o=result3.html cc=1
-
-例4) 2次元の棒グラフ行列を描画する
-dat3.csvファイルのテーマパーク名を構成要素項目に、
-Numberを構成量項目として棒グラフを描画する
-k=パラメータにGenderとAge項目を指定して、Gender項目の値をx軸(横方向)に、
-Age項目の値をy軸(縦方向)に展開した2次元の棒グラフ行列を描画する
-
-dat3.csv
-Gender,Age,テーマパーク名,Number
-男性,30,デズニ,100
-男性,30,UFJ,59
-男性,30,梅屋敷,180
-男性,40,デズニ,200
-男性,40,UFJ,3
-男性,40,梅屋敷,10
-男性,50,デズニ,110
-男性,50,UFJ,40
-女性,30,梅屋敷,100
-女性,30,デズニ,80
-女性,30,UFJ,200
-女性,40,デズニ,90
-女性,40,UFJ,80
-女性,40,梅屋敷,120
-女性,50,デズニ,99
-女性,50,UFJ,80
-女性,50,梅屋敷,110
-
-$ #{$cmd} i=dat3.csv k=Gender,Age v=Number f=テーマパーク名 o=result3.html title=性別と年代ごとのテーマパーク訪問回
-
-args=margs.Margs(sys.argv,"i=,o=,title=,cc=,height=,width=,k=,f=,v=,--help","f=,v=")
-
-入力ファイル => i
-終了ファイル => o
-タイトル  => title
-サイズ(z,y) => hight,width
-key(0,1,2) => k 
-横個数 (keyが一つの時のみ) => cc
-構成要素項目名(横軸)  => f
-構成量項目名(縦軸)  => v
-		"""
-	#i=,o=,title=,cc=,height=,width=,k=,f=,v=
-
-	# i,o,v,f,k=None,title=None,height=None,width=None,cc=None	
 	# kからディメンジョン決定
-	keys = [None,None]
-	if k == None :
+	keys = []
+	if k == None or k=="":
+
 		dim = 0 
-	elif type(k) is str:
-		keys = k.split(',')
-		dim = len(keys)
-	elif type(k) is list:
-		keys = k
-		dim = len(keys)
-	else :
-		raise TypeError("k= unsupport " + str(type(k)) )
-		  		
-	if dim > 2:
-		sys.stderr.write('warning : vaild dim <= 2 ') 
+
+	else:
+
+		if type(k) is str:
+			kk = k.split(',')
+		elif type(k) is list:
+			kk = k			
+		else :
+			raise TypeError("k= unsupport " + str(type(k)) )
+
+		if len(kk) > 2:
+			sys.stderr.write('warning : vaild dim <= 2 ')
+			dim = 2 
+		else:
+			dim = len(kk)
+
+		if dim == 2 :
+			keys.append(kk[1])
+		
+		keys.append(kk[0])
+
 
 	iFile = i
 	oFile = o
-	title
 
 	# グラフ用SVGの縦幅
 	if height : 
@@ -362,6 +290,13 @@ key(0,1,2) => k
 	outerMarginT = 30
 	outerMarginB = 30
 
+	#keys[0]=>x,keys[1]=>y 
+	gdsp = __makeData(iFile, f, v, keys)
+
+	if dim==1:
+		gdsp.adjustXMax(xMax)
+
+	"""
 	if dim == 0 : 
 		#makeZeroDemData(iFile, legendKey, barValue)
 	  #dataStr, countKey, maxValue, maxLeg, maxValueSize, minValue  = makeZeroDemData(iFile, legendKey, barValue)
@@ -410,19 +345,19 @@ key(0,1,2) => k
 		xNum   = gdsp.xcount   # x軸の棒グラフ数
 		yNum   = gdsp.ycount   # y軸の棒グラフ数
 		keyNum = gdsp.keycount # 凡例用キー数
-		
+	"""	
 
 #	0 : dataStr, 1     , 1         , countKey, maxValue, maxLeg, maxValueSize, minValue 	
 #	1 :	dataStr, xcount, ttl/xmax , countKey, maxValue, maxLeg, maxValueSize, minValue 
 #	2 :	dataStr, xcount, ycount   , keycount, maxValue, maxLeg, maxValueSize, minValue
 
 
-	xCampusSize = xNum * svgWidth + outerMarginL + outerMarginR
-	yCampusSize = yNum * svgHeight + outerMarginT + outerMarginB
-	maxValueCount = len(str(maxValue))
+	xCampusSize = gdsp.xcount  * svgWidth + outerMarginL + outerMarginR
+	yCampusSize = gdsp.ycount  * svgHeight + outerMarginT + outerMarginB
+	maxValueCount = len(str(gdsp.maxValue))
 	maxLength = maxValueCount + maxValueCount / 3
-	if maxLength < maxValueSize:
-		maxLength = maxValueSize
+	if maxLength < gdsp.maxValueSize:
+		maxLength = gdsp.maxValueSize
 
 
 	# 棒グラフ用SVGのマージン
@@ -431,22 +366,25 @@ key(0,1,2) => k
 	barMarginR = 10
 	barMarginT = 20
 	# 下は最大桁数*10(単位)+30(マージン)
-	barMarginB = maxLeg * 10 + 30
+	barMarginB = gdsp.maxLeg * 10 + 30
 
 
 	# ============
 	# 文字列作成
-	xZeroBar = ""
-
+	colorStyle =""
 	if dim > 1 :
 		colorStyle = '''
 			var tmpKeys = d3.keys(data[0]).filter(function(key) {{ if(key !== "{key1}" && key !== "{key2}") {{ return key; }}}});
 		'''.format(key1=keys[0],key2=keys[1])
 
-	else:
+	elif dim == 1:
 		colorStyle = '''
 		var tmpKeys = d3.keys(data[0]).filter(function(key) {{ if(key !== "{key1}") {{ return key; }} }} );
 		'''.format(key1=keys[0])
+	else:
+		colorStyle = '''
+			var tmpKeys = d3.keys(data[0]).filter(function(key) {{ if(key !== "{key1}") {{ return key; }} }} );
+		'''.format(key1=None)
 
 	# ============
 	# TITLE用文字列作成
@@ -517,7 +455,7 @@ var svg = d3.select("svg").selectAll(".bar")
      .attr("class", "bar")
      .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-'''.format(xNum=xNum)
+'''.format(xNum=gdsp.xcount)
 
 
 	# 1次元
@@ -545,7 +483,8 @@ var command = d3.select("body").append("div")
       .text("{footer}");
 '''.format(footer=footer)
 
-	if minValue < 0 :
+	xZeroBar = ""
+	if gdsp.minValue < 0 :
 		xZeroBar = '''
 svg.append("g")
    .attr("class", "x0 axis")
@@ -805,7 +744,7 @@ var tooltip = d3.select("body").append("div")
 	svgWidth = svgWidth, svgHeight = svgHeight,
 	titleStr=titleStr,
 	outLineStr=outLineStr,colorStyle=colorStyle,
-	minValue=minValue, maxValue = maxValue,
+	minValue=gdsp.minValue, maxValue = gdsp.maxValue,
 	svgStr =  svgStr, graphTitle = graphTitle , 
 	xZeroBar=xZeroBar,comStr = comStr)
 
