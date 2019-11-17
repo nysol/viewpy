@@ -6,42 +6,40 @@ import os
 import re
 import nysol.util.margs as margs
 import nysol.mcmd as nm
-import nysol.view.mbar as nvbar
+import nysol.view.mpie as nvpie
 import nysol.util as nu
 
 
 helpMSG="""
-概要) CSVデータから棒グラフ(HTML)を作成する
+概要) CSVデータから円グラフ(HTML)を作成する
       1次元グリッド、２次元グリッドのグラフ表示が可能
       マウススクロールで拡大、縮小、マウスドラッグで画像の移動が可能
 
-書式1) #{$cmd} [i=] [o=] [title=] [height=] [width=] [k=] [cc=] f= v= [--help]
+書式1) #{$cmd} [i=] [o=] [title=] [pr=] [k=] [cc=] f= share= [--help]
                 i=        : 入力データファイル名(CSV形式)
                 o=        : 出力ファイル名(HTMLファイル)
                 title=    : グラフのタイトル文字列を指定する
-                height=   : 棒グラフ用描画枠の縦幅を指定する(default:250/1つの棒グラフは400)
-                width=    : 棒グラフ用描画枠の横幅を指定する(default:250/1つの棒グラフは600)
+                pr=       : 円グラフの半径を指定する(default:160)
                 k=        : x軸,y軸に展開する属性項目名
-                            k=なしの場合は棒グラフを1つ作成する
-                            項目を1つ指定した場合は1次元の棒グラフ行列を、
-                            項目を2つ指定した場合は2次元の棒グラフ行列を作成する
+　　　　　　　　　   　　 　k=なしの場合は円グラフを1つ作成する
+　　　　　　　　　　    　　項目を1つ指定した場合は1次元の円グラフ行列を、
+　　　　　　　　　　　    　項目を2つ指定した場合は2次元の円グラフ行列を作成する
                             (y軸項目,x軸項目の順に指定)
-                cc=       : 1行に表示する棒グラフの最大数を指定する(default:5)
+                cc=       : 1行に表示する円グラフの最大数を指定する(default:5)
                             1次元グラフのみで指定可能(k=1つ指定の場合)
                 f=        : 構成要素項目名を指定する(必須)
                             データにnullが含まれる場合は無視する
-                v=    : 構成量項目(棒グラフの高さを決定する項目)を指定する(必須)
+                v=    : 構成比項目(円グラフの円弧の長さを決定する項目)を指定する(必須)
                             データにnullが含まれる場合は0として扱う
                             先頭の0は無視する
-                            数字以外の場合はエラーとなる
+                           数字以外の場合はエラーとなる
                 --help    : ヘルプの表示
 
 注意1)コマンドには、f=パラメータやk=パラメータで指定した項目を自動的に並べ替える機能はない
 グラフに表示したい順に、あらかじめ並べ替えておく必要がある。
-1次元、２次元グラフの場合はデータの先頭の棒グラフの表示順に並べられる
 
-例1) 棒グラフを1つ描画する
-dat1.csvファイルのAgeを構成要素項目に、Populationを構成量項目として棒グラフを1つ描画する
+例1) 円グラフを1つ描画する
+dat1.csvファイルのAgeを構成要素項目に、Populationを構成比項目として円グラフを1つ描画する
 
 dat1.csv
 Age,Population
@@ -55,10 +53,10 @@ Age,Population
 
 $ #{$cmd} i=dat1.csv v=Population f=Age o=result1.html
 
-例2) 1次元の棒グラフ行列を描画する
-dat2.csvファイルのAgeを構成要素項目に、Populationを構成量項目として棒グラフを描画する
+例2) 1次元の円グラフ行列を描画する
+dat2.csvファイルのAgeを構成要素項目に、Populationを構成比項目として円グラフを描画する
 k=パラメータにPref項目を指定しているので、
-Pref項目の値をx軸(横方向)に展開した1次元の棒グラフ行列が描画される
+Pref項目の値をx軸(横方向)に展開した1次元の円グラフ行列が描画される
 title=パラメータでグラフのタイトルも指定している
 
 dat2.csv
@@ -80,15 +78,15 @@ Pref,Age,Population
 
 $ #{$cmd} i=dat2.csv k=Pref v=Population f=Age o=result2.html
 
-例3) x軸上に表示する棒グラフの最大数を1とする
+例3) x軸上に表示する円グラフの最大数を1とする
 
 $ #{$cmd} i=dat2.csv k=Pref v=Population f=Age o=result3.html cc=1
 
-例4) 2次元の棒グラフ行列を描画する
+例4) 2次元の円グラフ行列を描画する
 dat3.csvファイルのテーマパーク名を構成要素項目に、
-Numberを構成量項目として棒グラフを描画する
+Numberを構成比項目として円グラフを描画する
 k=パラメータにGenderとAge項目を指定して、Gender項目の値をx軸(横方向)に、
-Age項目の値をy軸(縦方向)に展開した2次元の棒グラフ行列を描画する
+Age項目の値をy軸(縦方向)に展開した2次元の円グラフ行列を描画する
 
 dat3.csv
 Gender,Age,テーマパーク名,Number
@@ -111,27 +109,25 @@ Gender,Age,テーマパーク名,Number
 女性,50,梅屋敷,110
 
 $ #{$cmd} i=dat3.csv k=Gender,Age v=Number f=テーマパーク名 o=result3.html title=性別と年代ごとのテーマパーク訪問回
+
 		"""
 
 if "-help" in sys.argv or "--help" in sys.argv:
 	print(helpMSG)
 	exit()
 
-
-args=margs.Margs(sys.argv,"i=,o=,title=,cc=,height=,width=,k=,f=,v=,--help","i=,f=,v=")
-
-
+args=margs.Margs(sys.argv,"i=,o=,title=,cc=,pr=,k=,f=,v=,--help","i=,f=,v=")
 
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
 
 iFile = args.file("i=","r")   # inputファイル名を取得(readable)
 oFile = args.file("o=","w")   # outputファイル名を取得(writable)
 title         = args.str("title=")    # タイトル取得
-svgHeight     = args.int("height=")       # 棒グラフ用SVGの縦幅
-svgWidth      = args.int("width=")       # 棒グラフ用SVGの横幅
+pieRadius     = args.int("pr=")       # pieの半径
+
 xMax  = args.int("cc=")     # x軸に並べる棒グラフの数取得
 legendKey    = args.str("f=")    # 棒グラフの構成要素項目
-barValue     = args.str("v=")     # 棒グラフの値のキー
+pieValue     = args.str("v=")     # 棒グラフの値のキー
 keyValue     = args.str("k=")     # key項目値取得
 
 if args.keyValue["v="] :
@@ -143,10 +139,10 @@ if args.keyValue["f="] : # 凡例項目をヘッダからチェック
 #if args.keyValue["k="] :
 #	args.field("k=", iFile)      # key項目値取得
 
-nvbar.mbar(
-	iFile,oFile,barValue,legendKey,
-	k=keyValue,title=title,height=svgHeight,
-	width=svgWidth,cc=xMax,footer=footer
+nvpie.mpie(
+	iFile,oFile,pieValue,legendKey,
+	k=keyValue,title=title,pr=pieRadius,
+	cc=xMax,footer=footer
 )
 
 nu.mmsg.endLog(footer)
