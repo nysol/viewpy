@@ -34,6 +34,6 @@ NYSOL runs in UNIX environment (Linux and Mac OS X, not Windows).
 			install_requires=[
       	  "nysol"
 	    ],
-			scripts=['scripts/mbar.py','scripts/mpie.py','scripts/mnetpie.py'],
+			scripts=['scripts/mbar.py','scripts/mpie.py','scripts/mnetpie.py','scripts/mdtree.py','scripts/msankey.py']
 			)
        
