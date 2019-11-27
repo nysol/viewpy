@@ -689,7 +689,7 @@ def __replace(treeFile,nodePath,edgePath,clusterLabel,oFile):
 # mgv に 
 #ec=追加 nr=,er=のぞく
 #er=None,nr=None, <=拡大率
-def m2gv(
+def mgv(
 	ei     ,ef     ,ev=None,ec=None,el=None,ed=None,
 	ni=None,nf=None,nv=None,nc=None,nl=None,nw=1,
 	type="flat",k=None,o=None,
