@@ -104,29 +104,19 @@ if "-help" in sys.argv or "--help" in sys.argv:
 	print(helpMSG)
 	exit()
 
-# ===================================================================
-# パラメータ処理
-args=margs.Margs(sys.argv,"f=,color=,order=,transmit=,a=,i=,o=","f=,i=,a=,color=")
 
+keylist = [ 
+"f,color,order,transmit,a,i,o",
+""
+]
+convkey = {"i":"iFile","o":"oFile","f":"fld","a":"aFld"}
 
+kwd = nu.margv2dict(sys.argv,keylist,"iFile,fld,aFld",convkey)
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
 
-iFile = args.file("i=","r")
-oFile = args.file("o=","w")
-fld   = args.str("f=")
-color = args.str("color=","category")
-aFld  = args.str("a=")
-order = args.str("order=","alpha")
-transmit = args.str("transmit=")
-
-
-nvgv.mautocolor(
-	iFile,oFile,fld,aFld,color,
-	transmit=transmit,order=order
-)
-
-
-
+# ===================================================================
+# パラメータ処理
+nvgv.mautocolor(**kwd)
 
 # 終了メッセージ
 nu.mmsg.endLog(footer)

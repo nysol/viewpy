@@ -7,7 +7,12 @@ import re
 import nysol.util.margs as margs
 import nysol.mcmd as nm
 import nysol.view.mgv as nvgv
+
 import nysol.util as nu
+
+
+
+
 
 
 helpMSG="""
@@ -123,37 +128,17 @@ if "-help" in sys.argv or "--help" in sys.argv:
 	exit()
 
 
-args=margs.Margs(sys.argv,"type=,k=,ni=,nf=,nv=,nc=,ei=,ef=,ev=,ec=,o=,nl=,el=,ed=,d=,nw=,clusterLabel=,noiso=","ei=,ef=")
+keylist = [ 
+"type,k,ni,nf,nv,nc,ei,ef,ev,ec,o,nl,el,ed,nw",
+"d,clusterLabel,noiso"
+]
 
-
+kwd = nu.margv2dict(sys.argv,keylist,"ei,ef")
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
 
-ei = args.file("ei=","r")   # inputファイル名を取得(readable)
-ef = args.str("ef=")
-ev = args.str("ev=",None)
-ec = args.str("ec=",None)
-el = args.str("el=",None)
-ed = args.str("ed=",None)
-ni = args.str("ni=",None)
-nf = args.str("nf=",None)
-nv = args.str("nv=",None)
-nc = args.str("nc=",None)
-nl = args.str("nl=",None)
-nw = args.int("nw=",1)
-tp = args.str("type=","flat")
-k  = args.str("k=",None)
-o = args.file("o=","w",None) 
-d = args.bool("d=") 
-cl = args.bool("clusterLabel=") 
-niso = args.bool("noiso=") 
 
-nvgv.mgv(
-	ei,ef,ev=ev ,ec=ec ,el=el,ed=ed,
-	ni=ni,nf=nf,nv=nv,nc=nc,nl=nl,nw=nw,
-	type=tp,k=k,o=o,
-	d=d,clusterLabel=cl,noiso=niso
 
-)
+nvgv.mgv(**kwd)
 
 nu.mmsg.endLog(footer)
 

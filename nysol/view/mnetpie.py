@@ -111,7 +111,7 @@ def mnetpie(
 	edgefld.append("%s:edgeE"%(ef[1]))
 
 	if edgeWidthFld != None:
-		edgefld.append << "%s:edgesize"%(edgeWidthFld)
+		edgefld.append ("%s:edgesize"%(edgeWidthFld))
 	else:
 		edgedmy1.append("edgesize")
 		edgedmy2.append("1")

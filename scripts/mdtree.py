@@ -41,23 +41,17 @@ if "-help" in sys.argv or "--help" in sys.argv:
 	print(helpMSG)
 	exit()
 
-args=margs.Margs(sys.argv,"i=,o=,alpha=,-bar","i=,o=")
+keylist = [ 
+"i,o,alpha",
+"bar"
+]
+
+
+kwd = nu.margv2dict(sys.argv,keylist,"i,o")
 
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
 
-iFile		= args.file("i=","r")   # inputファイル名を取得(readable)
-oFile		= args.file("o=","w")   # outputファイル名を取得(writable)
-alpha =  args.str("alpha=") 
-barflg =  args.bool("-bar") 
-
-
-#if args.keyValue["k="] :
-#	args.field("k=", iFile)      # key項目値取得
-
-nvdtree.mdtree(
-	iFile,oFile,
-	alpha=alpha,bar=barflg
-)
+nvdtree.mdtree(**kwd)
 
 nu.mmsg.endLog(footer)
 

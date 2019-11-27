@@ -47,29 +47,17 @@ if "-help" in sys.argv or "--help" in sys.argv:
 	print(helpMSG)
 	exit()
 
+
+keylist = [ 
+"k,ni,nf,ei,ef,ev,no,eo",
+""
+]
+
 # ===================================================================
 # パラメータ処理
-args=margs.Margs(sys.argv,"k=,ni=,nf=,ei=,ef=,ev=,no=,eo=","ei=,ef=")
-
-
+kwd = nu.margv2dict(sys.argv,keylist,"ei,ef")
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
-
-
-
-ni = args.file("ni=","r")
-ei = args.file("ei=","r")
-key= args.str("k=")
-ef = args.str("ef=")
-ev = args.str("ev=")
-nf = args.str("nf=") 
-noFile = args.file("no=","w")
-eoFile = args.file("eo=","w")
-
-
-
-nvgv.mnest2tree(
-	k=key,ni=ni,nf=nf,ei=ei,ef=ef,ev=ev,no=noFile,eo=eoFile
-)
+nvgv.mnest2tree(**kwd)
 
 
 # 終了メッセージ

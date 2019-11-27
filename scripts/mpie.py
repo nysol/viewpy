@@ -116,34 +116,16 @@ if "-help" in sys.argv or "--help" in sys.argv:
 	print(helpMSG)
 	exit()
 
-args=margs.Margs(sys.argv,"i=,o=,title=,cc=,pr=,k=,f=,v=,--help","i=,f=,v=")
 
+keylist=[ 
+"i,o,title,cc,pr,k,f,v",
+""
+]
+
+kwd = nu.margv2dict(sys.argv,keylist,"i,f,v,o")
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
-
-iFile = args.file("i=","r")   # inputファイル名を取得(readable)
-oFile = args.file("o=","w")   # outputファイル名を取得(writable)
-title         = args.str("title=")    # タイトル取得
-pieRadius     = args.int("pr=")       # pieの半径
-
-xMax  = args.int("cc=")     # x軸に並べる棒グラフの数取得
-legendKey    = args.str("f=")    # 棒グラフの構成要素項目
-pieValue     = args.str("v=")     # 棒グラフの値のキー
-keyValue     = args.str("k=")     # key項目値取得
-
-if args.keyValue["v="] :
-	args.field("v=", iFile)  # 項目値をヘッダからチェック
-	
-if args.keyValue["f="] : # 凡例項目をヘッダからチェック
-	args.field("f=", iFile)
-
-#if args.keyValue["k="] :
-#	args.field("k=", iFile)      # key項目値取得
-
-nvpie.mpie(
-	iFile,oFile,pieValue,legendKey,
-	k=keyValue,title=title,pr=pieRadius,
-	cc=xMax,footer=footer
-)
+kwd["footer"]=footer
+nvpie.mpie(**kwd)
 
 nu.mmsg.endLog(footer)
 

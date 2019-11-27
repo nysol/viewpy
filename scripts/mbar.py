@@ -118,36 +118,16 @@ if "-help" in sys.argv or "--help" in sys.argv:
 	exit()
 
 
-args=margs.Margs(sys.argv,"i=,o=,title=,cc=,height=,width=,k=,f=,v=,--help","i=,f=,v=")
+keylist = [ 
+"i,o,title,cc,height,width,k,f,v",
+""
+]
 
-
-
+kwd = nu.margv2dict(sys.argv,keylist,"i,f,v")
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
+kwd["footer"] = footer
 
-iFile = args.file("i=","r")   # inputファイル名を取得(readable)
-oFile = args.file("o=","w")   # outputファイル名を取得(writable)
-title         = args.str("title=")    # タイトル取得
-svgHeight     = args.int("height=")       # 棒グラフ用SVGの縦幅
-svgWidth      = args.int("width=")       # 棒グラフ用SVGの横幅
-xMax  = args.int("cc=")     # x軸に並べる棒グラフの数取得
-legendKey    = args.str("f=")    # 棒グラフの構成要素項目
-barValue     = args.str("v=")     # 棒グラフの値のキー
-keyValue     = args.str("k=")     # key項目値取得
-
-if args.keyValue["v="] :
-	args.field("v=", iFile)  # 項目値をヘッダからチェック
-	
-if args.keyValue["f="] : # 凡例項目をヘッダからチェック
-	args.field("f=", iFile)
-
-#if args.keyValue["k="] :
-#	args.field("k=", iFile)      # key項目値取得
-
-nvbar.mbar(
-	iFile,oFile,barValue,legendKey,
-	k=keyValue,title=title,height=svgHeight,
-	width=svgWidth,cc=xMax,footer=footer
-)
+nvbar.mbar(**kwd)
 
 nu.mmsg.endLog(footer)
 

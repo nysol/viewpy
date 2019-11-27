@@ -22,43 +22,22 @@ if "-help" in sys.argv or "--help" in sys.argv:
 	print(helpMSG)
 	exit()
 
-paralist=[
-	"ei=","ni=","ef=","nf=","o=",
-	"nodeSizeFld=","pieDataFld=","pieTipsFld=",
-	"nodeTipsFld=","picFld=","nodeColorFld=",
-	"edgeWidthFld=","edgeColorFld=",
-	"--help","-undirect","-offline"
+keylist=[
+	["ei","ni","ef","nf","o",
+	"nodeSizeFld","pieDataFld","pieTipsFld",
+	"nodeTipsFld","picFld","nodeColorFld",
+	"edgeWidthFld","edgeColorFld"],
+	["undirect","offline"]
 ]
 nparalist=[
-	"ei=","ni=","ef=","nf="
+	"ei","ni","ef","nf","o"
 ]
-args=margs.Margs(sys.argv,",".join(paralist),",".join(nparalist))
 
+kwd = nu.margv2dict(sys.argv,keylist,nparalist)
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
 
+nnpie.mnetpie(**kwd)
 
-# 必須
-ni = args.file("ni=","r")   # inputファイル名を取得(readable)
-ei = args.file("ei=","r")   # inputファイル名を取得(readable)
-ef = args.str("ef=")    # 棒グラフの構成要素項目
-nf = args.str("nf=")     # 棒グラフの値のキー
-o  = args.file("o=","w")   # outputファイル名を取得(writable)
-
-
-
-nnpie.mnetpie(
-	ei,ni,ef,nf,o,
-	nodeSizeFld=args.str("nodeSizeFld="),
-	pieDataFld=args.str("pieDataFld="),
-	pieTipsFld=args.str("pieTipsFld="),
-	nodeTipsFld=args.str("nodeTipsFld="),
-	picFld=args.str("picFld="),
-	nodeColorFld=args.str("nodeColorFld="),
-	edgeWidthFld=args.str("edgeWidthFld="),
-	edgeColorFld=args.str("edgeColorFld="),
-	undirect=args.bool("-undirect"),
-	offline= args.bool("-offline")
-)
 
 nu.mmsg.endLog(footer)
 

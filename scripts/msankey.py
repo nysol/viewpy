@@ -66,40 +66,17 @@ if "-help" in sys.argv or "--help" in sys.argv:
 	print(helpMSG)
 	exit()
 
-args=margs.Margs(sys.argv,"i=,f=,v=,h=,w=,o=,t=,nl=,T=","i=,f=,v=")
 
+keylist=[ 
+"i,f,v,h,w,o,t,nl,T",
+""
+]
+convkey = {"t":"title"}
+
+kwd = nu.margv2dict(sys.argv,keylist,"i,f,v,o",convkey)
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
 
-iFile		= args.file("i=","r")   # inputファイル名を取得(readable)
-oFile		= args.file("o=","w")   # outputファイル名を取得(writable)
-title		= args.str("t=")    # タイトル取得
-height	= args.int("h=")	#size
-width		= args.int("w=")	#size    
-ef			= args.str("f=")
-ev			= args.str("v=")
-
-if args.keyValue["v="] :
-	args.field("v=", iFile)  # 項目値をヘッダからチェック
-	
-if args.keyValue["f="] : # 凡例項目をヘッダからチェック
-	args.field("f=", iFile)
-
-nl=args.bool("nl=")
-
-tmppath = args.str("T=")
-if tmppath != None :
-	import re
-	tmppath = re.sub(r'/$', "", tmppath)
-
-
-#if args.keyValue["k="] :
-#	args.field("k=", iFile)      # key項目値取得
-
-nvsank.msankey(
-	iFile,oFile,ev,ef,
-	title=title,h=height,w=width,
-	nl=nl,T=tmppath
-)
+nvsank.msankey(**kwd)
 
 nu.mmsg.endLog(footer)
 
