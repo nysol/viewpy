@@ -282,14 +282,22 @@ class Pmml(object):
 
 def mdtree(i,o,alpha=None,bar=False):
 
+
+	if not isinstance( i , str ):
+		raise TypeError("i= unsupport " + str(type(i)) )
+		
+	if not isinstance( o , str ):
+		raise TypeError("o= unsupport " + str(type(o)) )
+
+
+	if not isinstance( alpha , (str,int,float) ):
+		raise TypeError("alpha= unsupport " + str(type(alpha)) )
+
+
 	iFile = i
 	oFile = o
 	pm =  Pmml(iFile,alpha)
-	#nodedata=pm.nodeList(barflg)
-	#edgedata=pm.edgeList
-	#legenddata=pm.legendList
-	#indexdata=pm.indexList
-	#d_max = pm.data_max
+
 
 	if bar :
 		graph_dips ='''

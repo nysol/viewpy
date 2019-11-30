@@ -123,7 +123,7 @@ keylist = [
 ""
 ]
 
-kwd = nu.margv2dict(sys.argv,keylist,"i,f,v")
+kwd = nu.margv2dict(sys.argv,keylist,"i,f,v,o")
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
 kwd["footer"] = footer
 

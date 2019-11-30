@@ -99,13 +99,19 @@ class dataForGraphDsp(object):
 # keys
 # yBar(keyの値:行の項目)
 # xBar(keyの値:列の項目)
-def __makeData(iFile, legendKey, barValue,keys):
+def __makeData(imod, legendKey, barValue,kx=None,ky=None):
 
 	rtn = dataForGraphDsp()
 
-	kvstr = []
 
-	for flds,top,bot in nm.readcsv(iFile).getline(k=keys , otype='dict',q=True):
+	keys = []
+	if kx :
+		keys.append(kx)
+	if ky :
+		keys.append(ky)
+
+	kvstr = []
+	for flds,top,bot in imod.getline(k=keys , otype='dict',q=True):
 
 		if top == True:
 			keyhead = [] 
@@ -135,15 +141,51 @@ def __makeData(iFile, legendKey, barValue,keys):
 
 
 def mbar(i,o,v,f,k=None,title=None,height=None,width=None,cc=None,footer=""):
+	"""
+	CSVデータから棒グラフ(HTML)を作成する
+	1次元グリッド、２次元グリッドのグラフ表示が可能
+	マウススクロールで拡大、縮小、マウスドラッグで画像の移動が可能
+	"""
 
-	# kからディメンジョン決定
-	keys = []
-	if k == None or k=="":
+	# arg check
+	# i : str | list | nysol object
+	# o : str
+	# v : str (fldname)
+	# f : str (fldname)
+	# k : str | list | None (fldname size<2) => kx,ky
+	# title  : str | None
+	# height : int | None
+	# width  : int | None
+	# cc : str | int | None
+	# footer : str | None
 
-		dim = 0 
-
+	# i
+	if isinstance( i , ( str ,list ) ):
+		imod = nm.mread(i=i)
+	elif isinstance( i ,nm.nysollib.core.NysolMOD_CORE):
+		imod = i
 	else:
+		raise TypeError("i= unsupport " + str(type(i)) )
 
+	# o
+	if isinstance( o , str ):
+		oFile = o
+	else:
+		raise TypeError("o= unsupport " + str(type(o)) )
+
+	if not isinstance( f , str ):
+		raise TypeError("f= unsupport " + str(type(f)) )
+		
+	if not isinstance( v , str ):
+		raise TypeError("v= unsupport " + str(type(v)) )
+
+
+	#k
+	kx = None
+	ky = None
+	if k == None or k=="":
+		dim = 0 
+	else:
 		if type(k) is str:
 			kk = k.split(',')
 		elif type(k) is list:
@@ -159,40 +201,60 @@ def mbar(i,o,v,f,k=None,title=None,height=None,width=None,cc=None,footer=""):
 
 		if dim == 2 :
 			keys.append(kk[1])
-		
-		keys.append(kk[0])
+			ky = kk[0]  
+			kx = kk[1]
+		elif dim == 1:
+			kx = kk[0]
 
-
-	iFile = i
-	oFile = o
-
-	# グラフ用SVGの縦幅
-	if height : 
+	# hight=
+	if isinstance( height , (str , int ) ):
 		svgHeight = int(height)  
 	else:
+		if height != None:
+			sys.stderr.write('warning : height= unsupport '+ str(type(height)) + ': using default')
 		if dim == 0 :
 			svgHeight = 400 
 		else :
 			svgHeight = 250 
 
-	# グラフ用SVGの縦幅
-	if width : 
-		svgWidth = int(width)  
+	# width=
+	if isinstance( width , (str , int ) ):
+		svgWidth = int(width) 
 	else:
+		if width != None:
+			sys.stderr.write('warning : width= unsupport '+ str(type(width)) + ': using default')
 		if dim == 0 :
 			svgWidth = 600 
 		else :
 			svgWidth = 250 
-
+	
+	# cc=
 	xMax = 5
 	if cc != None:
-		if dim==1:
-			xMax =  int(cc)
-		else:
+		if dim != 1:
 			raise Exception("cc= takes only k=A")
+
+		if isinstance( cc , (str , int ) ):
+			xMax = int(cc) 
+		else:
+			raise TypeError("cc= unsupport " + str(type(cc)) )
 			
-	if xMax < 1 :
-		raise Exception("cc= takes more than 1")
+		
+		if xMax < 1 :
+			raise Exception("cc= takes more than 1")
+		
+	# titel=
+	if title == None :
+		title = ""
+	if not isinstance( title , str ):
+		raise TypeError("title= unsupport " + str(type(title)) )
+
+	# footer
+	if footer == None :
+		footer = ""
+	if not isinstance( footer , str ):
+		raise TypeError("footer= unsupport " + str(type(footer)) )
+
 
 	# キャンパスのマージン
 	outerMarginL = 30
@@ -201,7 +263,7 @@ def mbar(i,o,v,f,k=None,title=None,height=None,width=None,cc=None,footer=""):
 	outerMarginB = 30
 
 	#keys[0]=>x,keys[1]=>y 
-	gdsp = __makeData(iFile, f, v, keys)
+	gdsp = __makeData(imod, f, v, kx,ky)
 
 	if dim==1:
 		gdsp.adjustXMax(xMax)
@@ -213,7 +275,6 @@ def mbar(i,o,v,f,k=None,title=None,height=None,width=None,cc=None,footer=""):
 	maxLength = maxValueCount + maxValueCount / 3
 	if maxLength < gdsp.maxValueSize:
 		maxLength = gdsp.maxValueSize
-
 
 	# 棒グラフ用SVGのマージン
 	# 左は最大桁数+カンマの数*10(単位)+10(マージン)
