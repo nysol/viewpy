@@ -282,6 +282,12 @@ class Pmml(object):
 
 def mdtree(i,o,alpha=None,bar=False):
 
+	# arg check
+	# i : str 
+	# o : str
+	# alpha  : str | int | float | None
+	# bar    : bool | None
+
 
 	if not isinstance( i , str ):
 		raise TypeError("i= unsupport " + str(type(i)) )
@@ -292,7 +298,12 @@ def mdtree(i,o,alpha=None,bar=False):
 
 	if not isinstance( alpha , (str,int,float) ):
 		raise TypeError("alpha= unsupport " + str(type(alpha)) )
+		
+	if bar == None:
+		bar = False
 
+	if not isinstance( bar , bool ):
+		raise TypeError("bar= unsupport " + str(type(bar)) )
 
 	iFile = i
 	oFile = o

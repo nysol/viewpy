@@ -8,12 +8,6 @@ import nysol.mcmd as nm
 import nysol.view.viewjs as vjs
 import nysol.util.mtemp as mtemp
 
-
-
-
-
-
-
 def mnetpie(
 	ei,ni,ef,nf,o,
 	nodeSizeFld=None,nodeTipsFld=None,nodeColorFld=None,

@@ -12,9 +12,6 @@ import json
 def msankey(i,o,v,f,title="",h=500,w=960,nl=False,T=None):
 
 	# f= 2 fld
-	if f == None or f=="":
-		raise TypeError("f= takes just two field names")
-
 	if type(f) is str:
 		ff = f.split(',')
 	elif type(f) is list:
@@ -24,6 +21,7 @@ def msankey(i,o,v,f,title="",h=500,w=960,nl=False,T=None):
 
 	if len(ff) < 2:
 		raise TypeError("f= takes just two field names")
+
 
 	if T != None:
 		import re

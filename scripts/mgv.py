@@ -133,7 +133,10 @@ keylist = [
 "d,clusterLabel,noiso"
 ]
 
-kwd = nu.margv2dict(sys.argv,keylist,"ei,ef")
+convkey = {"type":"tp"}
+
+
+kwd = nu.margv2dict(sys.argv,keylist,"ei,ef",convkey)
 footer = os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
 
 

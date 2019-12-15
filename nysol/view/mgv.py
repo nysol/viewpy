@@ -692,8 +692,132 @@ def __replace(treeFile,nodePath,edgePath,clusterLabel,oFile):
 def mgv(
 	ei     ,ef     ,ev=None,ec=None,el=None,ed=None,
 	ni=None,nf=None,nv=None,nc=None,nl=None,nw=1,
-	type="flat",k=None,o=None,
+	tp="flat",k=None,o=None,
 	d=False,clusterLabel=False,noiso=False):
+
+	# arg check
+	# ei : str (filename)
+	# ef : str | list (fldname size=2)
+	# ev : str | None (fldname)
+	# ec : str | None (fldname)
+	# el : str | list | None (fldname no limit )
+	# ed : str | None (fldname)
+	# ni : str | None (filename)
+	# nf : str | None (fldname)
+	# nv : str | None (fldname)
+	# nc : str | None (fldname)
+	# nl : str | list | None  (fldname no limit )
+	# tp : str (flat|nest default:flat ) 
+	# k  : str | None (fldname)
+	# o  : str (filename)
+	# d : bool | None
+	# clusterLabel : bool | None
+	# noiso : bool | None
+
+
+	# ev
+	if not ( isinstance( ei , str )  ) :
+		raise TypeError("ei= unsupport " + str(type(ei)) )
+
+	# ef
+	if isinstance( ef , str ):
+		ef = ef.split(',')
+	elif not isinstance( ef , list ):
+		raise TypeError("ef= unsupport " + str(type(ef)) )
+
+
+	if len(ef) < 2:
+		raise TypeError("ef size == 2 " )
+	elif len(kk) > 2: 
+		sys.stderr.write('warning : ef size == 2 ')
+
+
+	if type(k) is str:
+			kk = k.split(',')
+		elif type(k) is list:
+			kk = k			
+		else :
+			raise TypeError("k= unsupport " + str(type(k)) )
+	
+	
+	if not ( isinstance( ef , str )  ) :
+		raise TypeError("ei= unsupport " + str(type(ei)) )
+
+
+	# ev
+	if not ( isinstance( ev , str ) or ev==None ) :
+		raise TypeError("ev= unsupport " + str(type(ev)) )
+
+	# ec
+	if not ( isinstance( ec , str ) or ec==None ) :
+		raise TypeError("ec= unsupport " + str(type(ec)) )
+
+	# el
+	if isinstance( el , str ):
+		el = el.split(',')
+		if len(el) == 1 and el[0] == '' :
+			el = None
+	elif not ( isinstance( el , list ) or el == None ):
+		raise TypeError("el= unsupport " + str(type(el)) )
+
+	# ni
+	if not ( isinstance( nf , str ) or nf==None ) :
+		raise TypeError("ni= unsupport " + str(type(ni)) )
+
+	# nf
+	if not ( isinstance( nf , str ) or nf==None ) :
+		raise TypeError("nf= unsupport " + str(type(nf)) )
+
+	# nv
+	if not ( isinstance( nv , str ) or nv==None ) :
+		raise TypeError("nv= unsupport " + str(type(nv)) )
+
+	# nc
+	if not ( isinstance( nc , str ) or nc==None ) :
+		raise TypeError("nc= unsupport " + str(type(nc)) )
+
+	# nl
+	if isinstance( nl , str ):
+		nl = nl.split(',')
+		if len(nl) == 1 and nl[0] == '' :
+			nl = None
+	elif not ( isinstance( nl , list ) or nl == None ):
+		raise TypeError("nl= unsupport " + str(type(nl)) )
+
+	# tp
+	if tp == None :
+		tp = "flat"
+	elif not isinstance( tp , str ):
+		raise TypeError("tp= unsupport " + str(type(tp)) )
+
+	# k
+	if not ( isinstance( k , str ) or k==None ) :
+		raise TypeError("o= unsupport " + str(type(k)) )
+
+	# o
+	if isinstance( o , str ):
+		oFile = o
+	else:
+		raise TypeError("o= unsupport " + str(type(o)) )
+
+	# d
+	if d == None :
+		d = False
+	if not isinstance( d , bool ):
+		raise TypeError("d= unsupport " + str(type(clusterLabel)) )
+
+	# clusterLabel
+	if clusterLabel == None :
+		clusterLabel = False
+	if not isinstance( clusterLabel , bool ):
+		raise TypeError("clusterLabel= unsupport " + str(type(clusterLabel)) )
+
+	# noiso
+	if noiso == None :
+		noiso = False
+	if not isinstance( noiso , bool ):
+		raise TypeError("noiso= unsupport " + str(type(bar)) )
+
 
 	temp =  mtemp.Mtemp()
 	xxni  = temp.file()
@@ -731,8 +855,8 @@ def mgv(
 	__mkNode(k,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,xxmap,xxnode)
 	__mkEdge(k,ef1,ef2,el,ec,ed,ev,ei,xxmap,xxedge)
 	# dot用のnodeとedgeデータをcluster別ファイルとして生成
-	__dotNode(xxnode,nw,type,clusterLabel,xxdotNode)
-	__dotEdge(xxedge                     ,xxdotEdge)
+	__dotNode(xxnode,nw,tp,clusterLabel,xxdotNode)
+	__dotEdge(xxedge                   ,xxdotEdge)
 
 	depth =None
 	if type=="flat":
