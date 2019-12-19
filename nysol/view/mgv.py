@@ -278,8 +278,8 @@ def __dotNode(iFile,nw,type,clusterLabel,oPath):
 
 		if prefix != "cluster" :
 			# node label
-			# labelが#で始まる場合は、clusterLabelが指定されていない限りlabelを表示しない
-			if nl[0]!="#" or clusterLabel :
+			# labelがleafでなければ、-clusterLabelが指定されていない限りlabelを表示しない
+			if leaf or clusterLabel :
 				attrStr += 'label="%s" '%(nl)
 			else:
 				attrStr += 'label="" '
@@ -343,11 +343,11 @@ def __mkEdge(key,ef1,ef2,el,ec,ed,ev,ei,mapFile,oFile):
 
 	evcdStr=[]
 	if ev:
-		evcdStr.append("#{ev}:ev")
+		evcdStr.append(ev+":ev")
 	if ec:
-		evcdStr.append("#{ec}:ec")
+		evcdStr.append(ec+":ec")
 	if ed:
-		evcdStr.append("#{ed}:ed")
+		evcdStr.append(ed+":ed")
 
 	f = None
 	if el:
@@ -466,6 +466,7 @@ def __mkNode(key,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,mapFile,oFile):
 
 
 
+
 ####################
 # mapファイルの作成
 '''
@@ -479,7 +480,7 @@ def __mkMap(key,nf,ni,ef1,ef2,ei,oFile):
 		nm.mcommon(k=ef2 , K=key , m=ei, r=True, i=ei).mcut(f="%s:nam"%(ef2))
 	]
 	if ni :
-		infL.append(nm.mcommon(k=nf , K=key , m=ei, r=True, i=ei).mcut(f="%s:nam"%(nf)))
+		infL.append(nm.mcommon(k=nf , K=key , m=ei, r=True, i=ni).mcut(f="%s:nam"%(nf)))
 
 	xleaf =   nm.muniq(i=infL,k="nam")
 	xleaf <<= nm.msetstr(v=1,a="leaf")
@@ -538,14 +539,13 @@ def __mkTree(iFile,oFile):
 	
 	nm.runs([f,fr])
 
-	
 	def _xnjoin(inf,outf,mfile,check ,no):
-		f  = nm.mnjoin(k="node%d"%(no),K="keyNum",m=mfile,f="num:node%d"%(no+1),i=inf,o=outf)
+		f  = nm.mnjoin(k="node%d"%(no),K="keyNum",m=mfile,n=True,f="num:node%d"%(no+1),i=inf,o=outf)
 		fc = nm.mdelnull(i=f,f="node%d"%(no+1),o=check)
 		return fc
 
 	i=0
-	depth=nil
+	depth=None
 	inf   = xxbase0
 	outf  = xxbase1
 	
@@ -570,11 +570,11 @@ def __mkTree(iFile,oFile):
 
 	while True:
 
-		_xnjoin(inf,outf,xxiFile2,xxcheck,no).run()
-		size=mrecount(i=check)
+		_xnjoin(inf,outf,xxiFile2,xxcheck,i).run()
+		size=mrecount(i=xxcheck)
 
 		if size==0:
-			nm.sortf(f="*",i=outf,o=oFile).run()
+			nm.msortf(f="*",i=outf,o=oFile).run()
 			depth=i+1
 			break
 
@@ -650,14 +650,14 @@ def __dotTree(iFile,depth,header,footer,oFile):
 
 				fpw.write("%ssubgraph cluster_%s {\n"%(indent,newFlds[i]))
 				fpw.write("##%s\n"%(newFlds[i]))
-				stack.push("%s}"%(indent)) # 対応する終了括弧をスタックしておく
+				stack.append("%s}"%(indent)) # 対応する終了括弧をスタックしておく
 				lastDepth=i+1 # 出力した最深位置の更新
 
 			oldFlds=newFlds
 		
 		# 深さが戻った分終了括弧"}"を出力
 		for i in range(lastDepth):
-			fpw.write("%s\n")%(stack.pop)
+			fpw.write("%s\n"%(stack.pop()))
 
 		fpw.write("%s\n"%(footer))
 
@@ -715,7 +715,7 @@ def mgv(
 	# noiso : bool | None
 
 
-	# ev
+	# ei
 	if not ( isinstance( ei , str )  ) :
 		raise TypeError("ei= unsupport " + str(type(ei)) )
 
@@ -725,24 +725,14 @@ def mgv(
 	elif not isinstance( ef , list ):
 		raise TypeError("ef= unsupport " + str(type(ef)) )
 
-
 	if len(ef) < 2:
 		raise TypeError("ef size == 2 " )
-	elif len(kk) > 2: 
+	elif len(ef) > 2: 
 		sys.stderr.write('warning : ef size == 2 ')
 
-
-	if type(k) is str:
-			kk = k.split(',')
-		elif type(k) is list:
-			kk = k			
-		else :
-			raise TypeError("k= unsupport " + str(type(k)) )
-	
-	
-	if not ( isinstance( ef , str )  ) :
-		raise TypeError("ei= unsupport " + str(type(ei)) )
-
+	# k
+	if not ( isinstance( k , str ) or k == None ) :
+		raise TypeError("k= unsupport " + str(type(k)) )
 
 	# ev
 	if not ( isinstance( ev , str ) or ev==None ) :
@@ -760,8 +750,12 @@ def mgv(
 	elif not ( isinstance( el , list ) or el == None ):
 		raise TypeError("el= unsupport " + str(type(el)) )
 
+	# ed
+	if not ( isinstance( ed, str ) or ed==None ) :
+		raise TypeError("ed= unsupport " + str(type(ed)) )
+
 	# ni
-	if not ( isinstance( nf , str ) or nf==None ) :
+	if not ( isinstance( ni , str ) or ni==None ) :
 		raise TypeError("ni= unsupport " + str(type(ni)) )
 
 	# nf
@@ -790,10 +784,6 @@ def mgv(
 	elif not isinstance( tp , str ):
 		raise TypeError("tp= unsupport " + str(type(tp)) )
 
-	# k
-	if not ( isinstance( k , str ) or k==None ) :
-		raise TypeError("o= unsupport " + str(type(k)) )
-
 	# o
 	if isinstance( o , str ):
 		oFile = o
@@ -804,7 +794,7 @@ def mgv(
 	if d == None :
 		d = False
 	if not isinstance( d , bool ):
-		raise TypeError("d= unsupport " + str(type(clusterLabel)) )
+		raise TypeError("d= unsupport " + str(type(d)) )
 
 	# clusterLabel
 	if clusterLabel == None :
@@ -848,23 +838,28 @@ def mgv(
 		ei = xxei
 		k  = "#key"
 
-	efs = ef.split(",")
-	ef1 = efs[0] 
-	ef2 = efs[1] 
+	#efs = ef.split(",")
+	ef1 = ef[0] 
+	ef2 = ef[1] 
+
 	__mkMap(k,nf,ni,ef1,ef2,ei,xxmap)
 	__mkNode(k,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,xxmap,xxnode)
+
 	__mkEdge(k,ef1,ef2,el,ec,ed,ev,ei,xxmap,xxedge)
 	# dot用のnodeとedgeデータをcluster別ファイルとして生成
 	__dotNode(xxnode,nw,tp,clusterLabel,xxdotNode)
 	__dotEdge(xxedge                   ,xxdotEdge)
 
 	depth =None
-	if type=="flat":
+	if tp=="flat":
 		depth=__mkFlat(xxnode,xxtree) # mgvとおなじ
-	elif type=="nest":
+	elif tp=="nest":
 		# tree構造の処理
 		# クラスタのみtree構造に格納する
 		depth=__mkTree(xxnode,xxtree) # mgvとおなじ
+	else:	
+		raise TypeError("unsupport type " + tp )
+		
 
 
 	xxdotTree=temp.file()
@@ -874,15 +869,22 @@ def mgv(
 
 	footer="}\n"
 
-	__dotTree(xxtree,depth,header,footer,xxdotTree) # mgvとおなじ
 
+	__dotTree(xxtree,depth,header,footer,xxdotTree) # mgvとおなじ
 	__replace(xxdotTree,xxdotNode,xxdotEdge,clusterLabel,o)
 
 
 if __name__ == '__main__':
 
 #i,o,v,f,k=None,title=None,height=None,width=None,cc=None,footer=None):
-	m2gv(ei="/Users/nain/work/git/view/mgv/check/data/edge.csv",ef="e1,e2",o="./t.dot")
+	mgv(ei="/Users/nain/work/git/view/mgv/check/data/edge.csv",ef="e1,e2",o="./t.dot")
+	mgv(ni="/Users/nain/work/git/nysolx/view/mgv/check/data/node1.csv",nf="node",ei="/Users/nain/work/git/nysolx/view/mgv/check/data/edge1.csv",ef="node1,node2",d=True,o="test70.dot")
+	mgv(ni="/Users/nain/work/git/nysolx/view/mgv/check/data/node1.csv",nf="node",ei="/Users/nain/work/git/nysolx/view/mgv/check/data/edge1.csv",ef="node1,node2",ed="dir",o="test71.dot")
+	mgv(ni="/Users/nain/work/git/nysolx/view/mgv/check/data/node1.csv",nf="node", ei="/Users/nain/work/git/nysolx/view/mgv/check/data/edge1.csv",ef="node1,node2",d=True,ed="dir",o="test72.dot")
+	mgv(tp="nest",k="cluster",ni="/Users/nain/work/git/nysolx/view/mgv/check/data/node1.csv",nf="node",ei="/Users/nain/work/git/nysolx/view/mgv/check/data/edge1.csv",ef="node1,node2",o="test73.dot")
+	mgv(tp="nest",k="cluster",ni="/Users/nain/work/git/nysolx/view/mgv/check/data/node1.csv",nf="node",ei="/Users/nain/work/git/nysolx/view/mgv/check/data/edge1.csv",ef="node1,node2",ed="dir",o="test74.dot")
+	mgv(tp="nest",k="cluster",ni="/Users/nain/work/git/nysolx/view/mgv/check/data/node1.csv",nf="node",ei="/Users/nain/work/git/nysolx/view/mgv/check/data/edge1.csv",ef="node1,node2",d=True,ed="dir",o="test75.dot")
+
 
 	"""
 	mnest2tree(k="cluster",ni="/Users/nain/work/git/view/mgv/check/data/node3.csv",
