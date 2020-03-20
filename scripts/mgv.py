@@ -130,7 +130,7 @@ if "-help" in sys.argv or "--help" in sys.argv:
 
 keylist = [ 
 "type,k,ni,nf,nv,nc,ei,ef,ev,ec,o,nl,el,ed,nw",
-"d,clusterLabel,noiso"
+"d,clusterLabel,noiso,normalize,normalizeEdge,normalizeNode"
 ]
 
 convkey = {"type":"tp"}

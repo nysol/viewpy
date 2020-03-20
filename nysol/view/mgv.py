@@ -333,7 +333,7 @@ def __dotNode(iFile,nw,type,clusterLabel,oPath):
 # 2) ev項目を基準化
 # 3) evがなければ全データ1をセット
 '''
-def __mkEdge(key,ef1,ef2,el,ec,ed,ev,ei,mapFile,oFile):
+def __mkEdge(key,ef1,ef2,el,ec,ed,ev,ei,norm,mapFile,oFile):
 
 	# mcal cat用のlabel項目の作成
 	label=[]
@@ -342,6 +342,8 @@ def __mkEdge(key,ef1,ef2,el,ec,ed,ev,ei,mapFile,oFile):
 			label.append("$s{"+nml+"}")	
 
 	evcdStr=[]
+	#エッジの拡大率は固定
+	er = 10  
 	if ev:
 		evcdStr.append(ev+":ev")
 	if ec:
@@ -374,7 +376,13 @@ def __mkEdge(key,ef1,ef2,el,ec,ed,ev,ei,mapFile,oFile):
 	f <<= nm.mjoin(k="key",K="nam",m=mapFile,f="num:keyNum")
 	f <<= nm.mjoin(k="nam1",K="nam",m=mapFile,f="num:num1,leaf:leaf1")
 	f <<= nm.mjoin(k="nam2",K="nam",m=mapFile,f="num:num2,leaf:leaf2")
-	f <<= nm.mcut(f="key,nam1,nam2,keyNum,num1,num2,el,ev,ed,ec,leaf1,leaf2",o=oFile)
+	if norm :
+		f <<= nm.mnormalize(f="ev:ev2",c="range")
+		f <<= nm.mcal(c='${ev2}*(%s-1)+1'%(er),a="evv")
+		f <<= nm.mcut(f="key,nam1,nam2,keyNum,num1,num2,el,evv:ev,ed,ec,leaf1,leaf2",o=oFile)
+	else:
+		f <<= nm.mcut(f="key,nam1,nam2,keyNum,num1,num2,el,ev,ed,ec,leaf1,leaf2",o=oFile)
+
 	f.run()
 
 
@@ -389,8 +397,7 @@ def __mkEdge(key,ef1,ef2,el,ec,ed,ev,ei,mapFile,oFile):
 #
 # オリジナルのkey,node名に一意のnodeID(num)をつけて、nodeマスターを作成する
 '''
-def __mkNode(key,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,mapFile,oFile):
-
+def __mkNode(key,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,norm,mapFile,oFile):
 	xbyE = None
 	xbyN =None
 	# edgeファイルからnode情報を生成
@@ -413,7 +420,7 @@ def __mkNode(key,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,mapFile,oFile):
 		label=[]
 		#label項目
 		if nl:
-			for nml in nl.split(',') :
+			for nml in nl :
 				label.append(nml)	
 		else:
 				label.append("$s{%s}"%(nf))
@@ -451,7 +458,15 @@ def __mkNode(key,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,mapFile,oFile):
 
 		f <<= nm.mjoin(k="key",K="nam",m=mapFile,f="num:keyNum")
 		f <<= nm.mjoin(k="nam",K="nam",m=mapFile,f="num,leaf")
-		f <<= nm.mcut(f="key,nam,keyNum,num,nl,nv,nc,leaf") #o=#{xxa}"
+
+		if norm :
+			#ノードの拡大率は固定
+			nr=3 
+			f <<= nm.mnormalize(f="nv:nv2",c="range")
+			f <<= nm.mcal(c='${nv2}*(%s-1)+1'%(nr),a="nvv")
+			f <<= nm.mcut(f="key,nam,keyNum,num,nl,nvv:nv,nc,leaf") #o=#{xxa}"
+		else:
+			f <<= nm.mcut(f="key,nam,keyNum,num,nl,nv,nc,leaf") #o=#{xxa}"
 
 		xbyN <<= nm.mjoin(k="keyNum",K="num",m=f,f="nl:nlk,nv:nvKey,nc:ncKey",n=True,i=f)
 		xbyN <<= nm.mcal(c='if(isnull($s{nlk}),$s{key},$s{nlk})',a='nlKey')
@@ -693,7 +708,9 @@ def mgv(
 	ei     ,ef     ,ev=None,ec=None,el=None,ed=None,
 	ni=None,nf=None,nv=None,nc=None,nl=None,nw=1,
 	tp="flat",k=None,o=None,
-	d=False,clusterLabel=False,noiso=False):
+	d=False,clusterLabel=False,noiso=False,
+	normalize=False,	normalizeEdge=False, normalizeNode=False
+	):
 
 	# arg check
 	# ei : str (filename)
@@ -806,7 +823,29 @@ def mgv(
 	if noiso == None :
 		noiso = False
 	if not isinstance( noiso , bool ):
-		raise TypeError("noiso= unsupport " + str(type(bar)) )
+		raise TypeError("noiso= unsupport " + str(type(noiso)) )
+
+	# noiso
+	if normalize == None :
+		normalize = False
+	if not isinstance( normalize , bool ):
+		raise TypeError("noiso= unsupport " + str(type(normalize)) )
+
+	if normalizeEdge == None :
+		normalizeEdge = False
+	if not isinstance( normalizeEdge , bool ):
+		raise TypeError("noiso= unsupport " + str(type(normalizeEdge)) )
+
+	if normalizeNode == None :
+		normalizeNode = False
+	if not isinstance( normalizeNode , bool ):
+		raise TypeError("noiso= unsupport " + str(type(normalizeNode)) )
+
+	if normalize :
+		normalizeEdge = True
+		normalizeNode = True
+
+
 
 
 	temp =  mtemp.Mtemp()
@@ -843,9 +882,9 @@ def mgv(
 	ef2 = ef[1] 
 
 	__mkMap(k,nf,ni,ef1,ef2,ei,xxmap)
-	__mkNode(k,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,xxmap,xxnode)
+	__mkNode(k,nf,nl,nv,nc,ni,ef1,ef2,ei,noiso,normalizeNode,xxmap,xxnode)
 
-	__mkEdge(k,ef1,ef2,el,ec,ed,ev,ei,xxmap,xxedge)
+	__mkEdge(k,ef1,ef2,el,ec,ed,ev,ei,normalizeEdge,xxmap,xxedge)
 	# dot用のnodeとedgeデータをcluster別ファイルとして生成
 	__dotNode(xxnode,nw,tp,clusterLabel,xxdotNode)
 	__dotEdge(xxedge                   ,xxdotEdge)
