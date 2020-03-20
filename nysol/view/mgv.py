@@ -338,8 +338,8 @@ def __mkEdge(key,ef1,ef2,el,ec,ed,ev,ei,mapFile,oFile):
 	# mcal cat用のlabel項目の作成
 	label=[]
 	if el:
-		for nml in el.split(',') :
-			label.append(nml)	
+		for nml in el :
+			label.append("$s{"+nml+"}")	
 
 	evcdStr=[]
 	if ev:
